@@ -4,7 +4,7 @@ from psycopg2.extras import RealDictCursor
 import os
 import time
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='.')
 
 # Retrieve database connection parameters from environment variables
 DB_HOST = os.environ.get('DB_HOST', 'localhost')
