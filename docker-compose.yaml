@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: mindflow-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: mindflow
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secretpassword
+    volumes:
+      - mindflow-db-data:/var/lib/postgresql/data
+    networks:
+      - mindflow-network
+    restart: on-failure
+
+  web:
+    build: .
+    image: mindflow-web:latest
+    container_name: mindflow-web
+    ports:
+      - "5000:5000"
+    environment:
+      DB_HOST: db
+      DB_USER: admin
+      DB_PASSWORD: secretpassword
+      DB_NAME: mindflow
+    depends_on:
+      - db
+    networks:
+      - mindflow-network
+    restart: on-failure
+
+volumes:
+  mindflow-db-data:
+    name: mindflow-db-data
+
+networks:
+  mindflow-network:
+    name: mindflow-network

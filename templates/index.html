@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindFlow</title>
+    <!-- Google Fonts: Inter & Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0a0908 0%, #17110d 50%, #020101 100%);
+            --panel-bg: rgba(255, 255, 255, 0.02);
+            --panel-border: rgba(255, 255, 255, 0.05);
+            --accent-primary: #d97706;
+            --accent-primary-glow: rgba(217, 119, 6, 0.3);
+            --accent-secondary: #ea580c;
+            --accent-secondary-glow: rgba(234, 88, 12, 0.3);
+            --accent-success: #10b981;
+            --text-main: #f3f4f6;
+            --text-muted: #a3a3a3;
+            --font-display: 'Outfit', sans-serif;
+            --font-sans: 'Inter', sans-serif;
+            --glass-blur: blur(16px);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Abstract ambient glowing blobs */
+        body::before, body::after {
+            content: "";
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            z-index: -1;
+            filter: blur(120px);
+            opacity: 0.25;
+            pointer-events: none;
+        }
+
+        body::before {
+            top: 10%;
+            left: 10%;
+            background: var(--accent-primary);
+        }
+
+        body::after {
+            bottom: 15%;
+            right: 10%;
+            background: var(--accent-secondary);
+        }
+
+        header {
+            padding: 2rem 4rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--panel-border);
+            backdrop-filter: var(--glass-blur);
+            background: rgba(15, 12, 32, 0.4);
+        }
+
+        .logo {
+            font-family: var(--font-display);
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(to right, #ffffff, var(--accent-secondary), var(--accent-primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--accent-secondary);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--accent-secondary);
+            display: inline-block;
+        }
+
+        .system-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            border: 1px solid var(--panel-border);
+            color: var(--text-muted);
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            background-color: var(--accent-success);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--accent-success);
+        }
+
+        main {
+            flex: 1;
+            padding: 3rem 4rem;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 2.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            main {
+                grid-template-columns: 1fr;
+                padding: 2rem;
+            }
+            header {
+                padding: 1.5rem 2rem;
+            }
+        }
+
+        .panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 24px;
+            backdrop-filter: var(--glass-blur);
+            padding: 2rem;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .panel:hover {
+            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.4), 0 0 2px var(--panel-border);
+        }
+
+        .panel-title {
+            font-family: var(--font-display);
+            font-size: 1.4rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: #ffffff;
+        }
+
+        /* Task Manager Styling */
+        .task-input-group {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        input[type="text"], textarea {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 0.8rem 1.2rem;
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input[type="text"]:focus, textarea:focus {
+            border-color: var(--accent-secondary);
+            box-shadow: 0 0 10px var(--accent-secondary-glow);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--accent-secondary), var(--accent-primary));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 0.8rem 1.5rem;
+            font-family: var(--font-sans);
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, filter 0.2s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.1);
+            box-shadow: 0 0 15px var(--accent-primary-glow);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
+        }
+
+        .task-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            max-height: 350px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .task-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 0.9rem 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.2s, transform 0.2s;
+        }
+
+        .task-item:hover {
+            background: rgba(255, 255, 255, 0.04);
+            transform: scale(1.01);
+        }
+
+        .task-content {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+        }
+
+        .checkbox-container {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--text-muted);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .task-item.completed .checkbox-container {
+            background: var(--accent-success);
+            border-color: var(--accent-success);
+        }
+
+        .task-item.completed .checkbox-container::after {
+            content: "✓";
+            color: white;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .task-text {
+            font-size: 0.95rem;
+            transition: color 0.2s, text-decoration 0.2s;
+        }
+
+        .task-item.completed .task-text {
+            color: var(--text-muted);
+            text-decoration: line-through;
+        }
+
+        .btn-delete {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 0.25rem;
+            border-radius: 6px;
+            transition: color 0.2s, background-color 0.2s;
+        }
+
+        .btn-delete:hover {
+            color: #ef4444;
+            background-color: rgba(239, 68, 68, 0.1);
+        }
+
+        /* Mood Tracker Styling */
+        .mood-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.75rem;
+        }
+
+        .mood-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .mood-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateY(-4px);
+            border-color: var(--accent-secondary);
+        }
+
+        .mood-card.active {
+            background: rgba(6, 182, 212, 0.15);
+            border-color: var(--accent-secondary);
+            box-shadow: 0 0 15px var(--accent-secondary-glow);
+        }
+
+        .mood-emoji {
+            font-size: 1.8rem;
+        }
+
+        .mood-label {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .mood-card.active .mood-label {
+            color: white;
+        }
+
+        .mood-history {
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+
+        .mood-dot {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            border: 1px solid var(--panel-border);
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .mood-dot:hover::after {
+            content: attr(data-time);
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #000;
+            color: #fff;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            white-space: nowrap;
+            z-index: 10;
+        }
+
+        /* Notes Styling */
+        .notes-area {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .note-editor {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .note-editor textarea {
+            height: 100px;
+            resize: none;
+        }
+
+        .notes-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .note-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--panel-border);
+            border-radius: 14px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            position: relative;
+        }
+
+        .note-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .note-time {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .note-body {
+            font-size: 0.9rem;
+            line-height: 1.4;
+            color: #e5e7eb;
+            white-space: pre-wrap;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--panel-border);
+            margin-top: auto;
+            backdrop-filter: var(--glass-blur);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            <span class="logo-dot"></span> MindFlow
+        </div>
+        <div class="system-status">
+            <span class="status-indicator"></span> Services Connected & Persistent
+        </div>
+    </header>
+
+    <main>
+        <!-- Left Column: Tasks and Mood -->
+        <div style="display: flex; flex-direction: column; gap: 2.5rem;">
+            <!-- Task Manager -->
+            <section class="panel">
+                <div class="panel-title">
+                    <span>Task Flow</span>
+                    <span style="font-size: 0.8rem; color: var(--accent-secondary);" id="task-count">0 tasks</span>
+                </div>
+                <div class="task-input-group">
+                    <input type="text" id="new-task-input" placeholder="Type a task and hit enter or click Add...">
+                    <button class="btn" onclick="addTask()">Add Task</button>
+                </div>
+                <ul class="task-list" id="task-list-element">
+                    <!-- Tasks will be rendered here -->
+                </ul>
+            </section>
+
+            <!-- Mood Tracker -->
+            <section class="panel">
+                <div class="panel-title">
+                    <span>Daily Mood State</span>
+                </div>
+                <div class="mood-grid">
+                    <div class="mood-card" onclick="logMood('Focused')">
+                        <span class="mood-emoji">⚡</span>
+                        <span class="mood-label">Focused</span>
+                    </div>
+                    <div class="mood-card" onclick="logMood('Zen')">
+                        <span class="mood-emoji">🍃</span>
+                        <span class="mood-label">Zen</span>
+                    </div>
+                    <div class="mood-card" onclick="logMood('Productive')">
+                        <span class="mood-emoji">🔥</span>
+                        <span class="mood-label">Productive</span>
+                    </div>
+                    <div class="mood-card" onclick="logMood('Tired')">
+                        <span class="mood-emoji">💤</span>
+                        <span class="mood-label">Tired</span>
+                    </div>
+                </div>
+                <div>
+                    <h4 style="font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--text-muted);">Flow History:</h4>
+                    <div class="mood-history" id="mood-history-element">
+                        <!-- Mood history items -->
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Right Column: Quick Notes -->
+        <div style="display: flex; flex-direction: column; gap: 2.5rem;">
+            <section class="panel" style="flex: 1;">
+                <div class="panel-title">
+                    <span>Thoughts & Ideas</span>
+                </div>
+                <div class="notes-area">
+                    <div class="note-editor">
+                        <textarea id="new-note-input" placeholder="Jot down a quick thought (persistent database)..."></textarea>
+                        <button class="btn" style="align-self: flex-end;" onclick="addNote()">Save Note</button>
+                    </div>
+                    <div class="notes-list" id="notes-list-element">
+                        <!-- Notes will be rendered here -->
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        MindFlow App • Virtualization and Containers Assignment 1 • Persistent PostgreSQL Database State
+    </footer>
+
+    <script>
+        const API_URL = '';
+
+        // Load initially
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchTasks();
+            fetchNotes();
+            fetchMoods();
+
+            // Task input Enter trigger
+            document.getElementById('new-task-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    addTask();
+                }
+            });
+        });
+
+        // ------------------ TASKS ------------------
+        async function fetchTasks() {
+            try {
+                const res = await fetch(`${API_URL}/api/tasks`);
+                const tasks = await res.json();
+                const list = document.getElementById('task-list-element');
+                list.innerHTML = '';
+                document.getElementById('task-count').innerText = `${tasks.length} task${tasks.length === 1 ? '' : 's'}`;
+                
+                tasks.forEach(task => {
+                    const li = document.createElement('li');
+                    li.className = `task-item ${task.completed ? 'completed' : ''}`;
+                    li.innerHTML = `
+                        <div class="task-content" onclick="toggleTask(${task.id}, ${task.completed})">
+                            <div class="checkbox-container"></div>
+                            <span class="task-text">${escapeHtml(task.title)}</span>
+                        </div>
+                        <button class="btn-delete" onclick="deleteTask(${task.id})">✕</button>
+                    `;
+                    list.appendChild(li);
+                });
+            } catch (err) {
+                console.error("Error fetching tasks:", err);
+            }
+        }
+
+        async function addTask() {
+            const input = document.getElementById('new-task-input');
+            const title = input.value.trim();
+            if (!title) return;
+
+            try {
+                const res = await fetch(`${API_URL}/api/tasks`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title })
+                });
+                if (res.ok) {
+                    input.value = '';
+                    fetchTasks();
+                }
+            } catch (err) {
+                console.error("Error adding task:", err);
+            }
+        }
+
+        async function toggleTask(id, currentCompleted) {
+            try {
+                await fetch(`${API_URL}/api/tasks/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ completed: !currentCompleted })
+                });
+                fetchTasks();
+            } catch (err) {
+                console.error("Error toggling task:", err);
+            }
+        }
+
+        async function deleteTask(id) {
+            try {
+                await fetch(`${API_URL}/api/tasks/${id}`, {
+                    method: 'DELETE'
+                });
+                fetchTasks();
+            } catch (err) {
+                console.error("Error deleting task:", err);
+            }
+        }
+
+        // ------------------ NOTES ------------------
+        async function fetchNotes() {
+            try {
+                const res = await fetch(`${API_URL}/api/notes`);
+                const notes = await res.json();
+                const list = document.getElementById('notes-list-element');
+                list.innerHTML = '';
+                
+                notes.forEach(note => {
+                    const div = document.createElement('div');
+                    div.className = 'note-card';
+                    const timeStr = new Date(note.created_at).toLocaleString();
+                    div.innerHTML = `
+                        <div class="note-header">
+                            <span class="note-time">${timeStr}</span>
+                            <button class="btn-delete" onclick="deleteNote(${note.id})">✕</button>
+                        </div>
+                        <div class="note-body">${escapeHtml(note.content)}</div>
+                    `;
+                    list.appendChild(div);
+                });
+            } catch (err) {
+                console.error("Error fetching notes:", err);
+            }
+        }
+
+        async function addNote() {
+            const input = document.getElementById('new-note-input');
+            const content = input.value.trim();
+            if (!content) return;
+
+            try {
+                const res = await fetch(`${API_URL}/api/notes`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content })
+                });
+                if (res.ok) {
+                    input.value = '';
+                    fetchNotes();
+                }
+            } catch (err) {
+                console.error("Error adding note:", err);
+            }
+        }
+
+        async function deleteNote(id) {
+            try {
+                await fetch(`${API_URL}/api/notes/${id}`, {
+                    method: 'DELETE'
+                });
+                fetchNotes();
+            } catch (err) {
+                console.error("Error deleting note:", err);
+            }
+        }
+
+        // ------------------ MOODS ------------------
+        async function fetchMoods() {
+            try {
+                const res = await fetch(`${API_URL}/api/moods`);
+                const moods = await res.json();
+                const container = document.getElementById('mood-history-element');
+                container.innerHTML = '';
+
+                moods.forEach(mood => {
+                    const dot = document.createElement('div');
+                    dot.className = 'mood-dot';
+                    const emoji = mood.mood === 'Focused' ? '⚡' : 
+                                  mood.mood === 'Zen' ? '🍃' : 
+                                  mood.mood === 'Productive' ? '🔥' : '💤';
+                    dot.innerText = emoji;
+                    const dateStr = new Date(mood.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    dot.setAttribute('data-time', `${mood.mood} at ${dateStr}`);
+                    container.appendChild(dot);
+                });
+            } catch (err) {
+                console.error("Error fetching moods:", err);
+            }
+        }
+
+        async function logMood(mood) {
+            // Add visual active state temporarily
+            const cards = document.querySelectorAll('.mood-card');
+            cards.forEach(card => {
+                if (card.querySelector('.mood-label').innerText === mood) {
+                    card.classList.add('active');
+                    setTimeout(() => card.classList.remove('active'), 800);
+                }
+            });
+
+            try {
+                const res = await fetch(`${API_URL}/api/moods`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mood })
+                });
+                if (res.ok) {
+                    fetchMoods();
+                }
+            } catch (err) {
+                console.error("Error logging mood:", err);
+            }
+        }
+
+        // Helper
+        function escapeHtml(text) {
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
